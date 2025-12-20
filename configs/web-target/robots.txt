@@ -1,0 +1,21 @@
+# Intentionally exposed paths for OSINT demos
+User-agent: *
+Disallow: /admin/
+Disallow: /backup/
+Disallow: /config/
+Disallow: /internal/
+Disallow: /api/v1/
+Disallow: /api/v2/
+Disallow: /portal/admin/
+Disallow: /wp-admin/
+Disallow: /wp-includes/
+Disallow: /.git/
+Disallow: /.env
+
+# Allow search engines
+Allow: /
+Allow: /about
+Allow: /contact
+Allow: /services
+
+Sitemap: http://www.lab.local/sitemap.xml

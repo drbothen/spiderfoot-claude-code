@@ -1,0 +1,80 @@
+# SpiderFoot OSINT Lab Environment
+# Deploy: docker compose up -d
+# Teardown: docker compose down -v
+# Reset: docker compose down -v && docker compose up -d
+#
+# First-time setup: ./lab.sh up (will clone and build SpiderFoot)
+
+services:
+  # SpiderFoot OSINT automation tool
+  # Built from official GitHub repo (no official Docker Hub image)
+  spiderfoot:
+    build:
+      context: https://github.com/smicallef/spiderfoot.git
+      dockerfile: Dockerfile
+    image: spiderfoot:local
+    container_name: spiderfoot
+    ports:
+      - "5001:5001"
+    volumes:
+      - spiderfoot-data:/var/lib/spiderfoot
+      - ./output:/output
+    networks:
+      - osint-lab
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5001/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Local web server target (simulates company website)
+  web-target:
+    image: nginx:alpine
+    container_name: web-target
+    ports:
+      - "8080:80"
+    volumes:
+      - ./configs/web-target:/usr/share/nginx/html:ro
+    networks:
+      osint-lab:
+        aliases:
+          - www.lab.local
+          - lab.local
+    restart: unless-stopped
+
+  # OWASP Juice Shop (vulnerable web app for realistic scanning)
+  juice-shop:
+    image: bkimminich/juice-shop:latest
+    container_name: juice-shop
+    ports:
+      - "3000:3000"
+    networks:
+      osint-lab:
+        aliases:
+          - shop.lab.local
+    restart: unless-stopped
+
+  # Damn Vulnerable Web Application
+  dvwa:
+    image: vulnerables/web-dvwa:latest
+    container_name: dvwa
+    ports:
+      - "8081:80"
+    environment:
+      - MYSQL_PASS=dvwa
+    networks:
+      osint-lab:
+        aliases:
+          - dvwa.lab.local
+    restart: unless-stopped
+
+volumes:
+  spiderfoot-data:
+    name: spiderfoot-data
+
+networks:
+  osint-lab:
+    name: osint-lab
+    driver: bridge
