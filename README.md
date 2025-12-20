@@ -29,7 +29,7 @@ uv run sf-cli results --scan-id $SCAN_ID --format json | \
 
 ```bash
 # Clone the repository
-git clone https://github.com/joshmagady/spiderfoot-claude-code.git
+git clone https://github.com/drbothen/spiderfoot-claude-code.git
 cd spiderfoot-claude-code
 
 # Start the lab (first run builds SpiderFoot image, takes 2-3 min)

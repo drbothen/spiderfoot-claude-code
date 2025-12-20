@@ -25,9 +25,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/joshmagady/spiderfoot-claude-code"
-Repository = "https://github.com/joshmagady/spiderfoot-claude-code"
-Issues = "https://github.com/joshmagady/spiderfoot-claude-code/issues"
+Homepage = "https://github.com/drbothen/spiderfoot-claude-code"
+Repository = "https://github.com/drbothen/spiderfoot-claude-code"
+Issues = "https://github.com/drbothen/spiderfoot-claude-code/issues"
 
 [project.scripts]
 sf-cli = "scripts.sf_cli:main"
