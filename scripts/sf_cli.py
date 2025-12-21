@@ -152,6 +152,57 @@ class SpiderFootClient:
         """Get scan summary with event counts by type."""
         return self._request("GET", f"/scansummary?id={scan_id}&by=type")
 
+    def scan_log(self, scan_id: str, limit: int = 100) -> list:
+        """Get scan log entries."""
+        return self._request("GET", f"/scanlog?id={scan_id}&limit={limit}")
+
+    def scan_detailed_status(self, scan_id: str) -> dict:
+        """Get detailed scan status including module activity and discovered assets."""
+        status = self.scan_status(scan_id)
+        if "error" in status:
+            return status
+
+        # Get summary by event type
+        summary = self.scan_summary(scan_id)
+
+        # Get recent log entries to determine active modules
+        log = self.scan_log(scan_id, limit=50)
+        active_modules = {}
+        for entry in log[-20:]:
+            module = entry[1]
+            if module not in active_modules:
+                active_modules[module] = {"last_seen": entry[0], "count": 0}
+            active_modules[module]["count"] += 1
+
+        # Get discovered IPs
+        ips = self.scan_results(scan_id, "IP_ADDRESS")
+        unique_ips = sorted(set(r[1] for r in ips)) if ips else []
+
+        # Get discovered domains
+        domains = self.scan_results(scan_id, "INTERNET_NAME")
+        unique_domains = sorted(set(r[1].split("/")[0] if "/" in r[1] else r[1]
+                                    for r in domains if isinstance(r[1], str) and "." in r[1]))[:20]
+
+        # Build detailed status
+        detailed = {
+            "scan": status,
+            "event_types": len(summary) if isinstance(summary, list) else 0,
+            "active_modules": [
+                {"module": m, "last_seen": d["last_seen"], "recent_activity": d["count"]}
+                for m, d in sorted(active_modules.items(), key=lambda x: x[1]["count"], reverse=True)
+            ],
+            "discovered_ips": {
+                "count": len(unique_ips),
+                "ips": unique_ips
+            },
+            "discovered_domains": {
+                "count": len(unique_domains),
+                "sample": unique_domains
+            }
+        }
+
+        return detailed
+
     def stop_scan(self, scan_id: str) -> dict:
         """Stop a running scan."""
         return self._request("GET", f"/stopscan?id={scan_id}")
@@ -190,6 +241,8 @@ def main():
     # Status command
     status_parser = subparsers.add_parser("status", help="Get scan status")
     status_parser.add_argument("--scan-id", "-i", required=True, help="Scan ID")
+    status_parser.add_argument("--detailed", "-d", action="store_true",
+                               help="Show detailed status with active modules and discovered assets")
 
     # Results command
     results_parser = subparsers.add_parser("results", help="Get scan results")
@@ -257,7 +310,10 @@ def main():
                 print(json.dumps(summary, indent=2))
 
     elif args.command == "status":
-        result = client.scan_status(args.scan_id)
+        if args.detailed:
+            result = client.scan_detailed_status(args.scan_id)
+        else:
+            result = client.scan_status(args.scan_id)
         print(json.dumps(result, indent=2))
 
     elif args.command == "results":
