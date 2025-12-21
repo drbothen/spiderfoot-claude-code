@@ -93,6 +93,9 @@ uv run sf-cli list
 # Get scan status
 uv run sf-cli status --scan-id <ID>
 
+# Get detailed status (active modules, discovered IPs/domains)
+uv run sf-cli status --scan-id <ID> --detailed
+
 # Get results (JSON for AI processing)
 uv run sf-cli results --scan-id <ID> --format json
 
