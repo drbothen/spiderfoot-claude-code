@@ -174,14 +174,52 @@ uv run sf-cli results --scan-id $SCAN_ID --format json | \
 
 ## API Keys for Enhanced Scanning
 
-Configure API keys in SpiderFoot's web UI (http://localhost:5001 > Settings) to enable enhanced modules:
+Many SpiderFoot modules require API keys from third-party services. You can configure these in two ways:
 
-- **Have I Been Pwned** - Credential breach checking
-- **VirusTotal** - Malware/threat analysis
-- **Shodan** - Internet-wide device discovery
-- **SecurityTrails** - Passive DNS
-- **Hunter.io** - Corporate email discovery
-- **AlienVault OTX** - Threat intelligence
+### Option 1: Environment File (Recommended)
+
+Pre-configure API keys before starting the lab:
+
+```bash
+# Copy the example file
+cp .env.example .env
+
+# Edit .env and add your API keys
+# Only add keys for services you have accounts with
+```
+
+The `.env` file is gitignored, so your keys stay private. On startup, SpiderFoot generates a `spiderfoot.cfg` file that can be imported via the web UI.
+
+**Example `.env` entries:**
+```bash
+SFP_SHODAN_API_KEY=your_shodan_key_here
+SFP_VIRUSTOTAL_API_KEY=your_virustotal_key_here
+SFP_HUNTER_API_KEY=your_hunter_key_here
+```
+
+### Option 2: Web UI
+
+Configure API keys through SpiderFoot's web interface:
+
+1. Open http://localhost:5001
+2. Navigate to Settings
+3. Find modules with a padlock icon (requires API key)
+4. Enter your API key and click Save
+
+### Key Services for Enhanced Scanning
+
+| Service | Module | Use Case | Free Tier |
+|---------|--------|----------|-----------|
+| [Shodan](https://www.shodan.io/) | sfp_shodan | Device discovery, exposed services | Yes |
+| [VirusTotal](https://www.virustotal.com/) | sfp_virustotal | Malware/threat analysis | Yes |
+| [Have I Been Pwned](https://haveibeenpwned.com/) | sfp_haveibeenpwned | Credential breach checking | Paid |
+| [Hunter.io](https://hunter.io/) | sfp_hunter | Corporate email discovery | Yes |
+| [AlienVault OTX](https://otx.alienvault.com/) | sfp_alienvault | Threat intelligence | Yes |
+| [SecurityTrails](https://securitytrails.com/) | sfp_securitytrails | Passive DNS, historical data | Yes |
+| [Censys](https://censys.io/) | sfp_censys | Certificate/host search | Yes |
+| [BuiltWith](https://builtwith.com/) | sfp_builtwith | Technology profiling | Yes |
+
+See `.env.example` for the complete list of supported API keys.
 
 ## Legal Notice
 
