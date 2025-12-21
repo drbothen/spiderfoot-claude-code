@@ -188,13 +188,19 @@ cp .env.example .env
 # Only add keys for services you have accounts with
 ```
 
-The `.env` file is gitignored, so your keys stay private. On startup, SpiderFoot generates a `spiderfoot.cfg` file that can be imported via the web UI.
+The `.env` file is gitignored, so your keys stay private. **API keys are automatically imported on container startup** - no manual configuration required.
 
 **Example `.env` entries:**
 ```bash
 SFP_SHODAN_API_KEY=your_shodan_key_here
 SFP_VIRUSTOTAL_API_KEY=your_virustotal_key_here
 SFP_HUNTER_API_KEY=your_hunter_key_here
+```
+
+**Manual import (if needed):**
+```bash
+# Re-import API keys without restarting
+uv run sf-cli import-keys --env-file .env
 ```
 
 ### Option 2: Web UI
