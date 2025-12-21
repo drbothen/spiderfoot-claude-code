@@ -22,6 +22,7 @@ Pipe results to Claude Code for interpretation:
 
 import argparse
 import json
+import os
 import sys
 import time
 
@@ -216,6 +217,13 @@ def main():
     delete_parser = subparsers.add_parser("delete", help="Delete a scan")
     delete_parser.add_argument("--scan-id", "-i", required=True, help="Scan ID")
 
+    # Import API keys command
+    import_parser = subparsers.add_parser("import-keys", help="Import API keys from .env file")
+    import_parser.add_argument("--env-file", "-e", default=".env",
+                               help="Path to .env file (default: .env)")
+    import_parser.add_argument("--config-file", "-c",
+                               help="Path to existing spiderfoot.cfg file to import")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -291,6 +299,23 @@ def main():
     elif args.command == "delete":
         result = client.delete_scan(args.scan_id)
         print(json.dumps(result, indent=2))
+
+    elif args.command == "import-keys":
+        import subprocess
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        config_script = os.path.join(script_dir, "configure_api_keys.py")
+
+        cmd = [sys.executable, config_script, "--url", args.url]
+
+        if args.config_file:
+            # Import existing config file directly
+            cmd.extend(["--generate-cfg", args.config_file, "--import"])
+        else:
+            # Generate from .env and import
+            cmd.extend(["--env-file", args.env_file, "--generate-cfg", "spiderfoot.cfg", "--import"])
+
+        result = subprocess.run(cmd)
+        sys.exit(result.returncode)
 
 
 if __name__ == "__main__":

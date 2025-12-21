@@ -37,3 +37,4 @@ spiderfoot-data/
 # Environment files with secrets
 .env
 *.env.local
+spiderfoot.cfg

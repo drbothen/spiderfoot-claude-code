@@ -30,6 +30,11 @@ import sys
 import time
 from pathlib import Path
 
+try:
+    import requests
+except ImportError:
+    requests = None
+
 
 # Map environment variable patterns to SpiderFoot module option names
 # Format: (env_var_suffix, module_name, option_name)
@@ -337,12 +342,101 @@ def generate_spiderfoot_cfg(api_keys: dict, output_path: Path) -> None:
     lines = []
     for module, options in api_keys.items():
         for option, value in options.items():
-            lines.append(f"{module}:{option},{value}")
+            lines.append(f"{module}:{option}={value}")
 
     with open(output_path, "w") as f:
         f.write("\n".join(lines))
 
     print(f"Generated {output_path} with {len(lines)} API keys")
+
+
+def get_csrf_token(base_url: str) -> str:
+    """Get CSRF token from SpiderFoot settings page."""
+    if not requests:
+        raise ImportError("requests library required for API import")
+
+    response = requests.get(f"{base_url}/opts", timeout=10)
+    response.raise_for_status()
+
+    # Extract token from page - look for: var defined_token = 'xxx';
+    import re
+    match = re.search(r"var\s+token\s*=\s*['\"]([^'\"]+)['\"]", response.text)
+    if not match:
+        # Try alternate pattern
+        match = re.search(r"name=['\"]token['\"].*?value=['\"]([^'\"]+)['\"]", response.text)
+    if not match:
+        # Try hidden input
+        match = re.search(r"id=['\"]token['\"].*?value=['\"]([^'\"]+)['\"]", response.text)
+
+    if match:
+        return match.group(1)
+
+    raise ValueError("Could not find CSRF token in settings page")
+
+
+def import_config_via_api(base_url: str, cfg_path: Path) -> bool:
+    """
+    Import API keys configuration via SpiderFoot web API.
+
+    Args:
+        base_url: SpiderFoot base URL (e.g., http://localhost:5001)
+        cfg_path: Path to spiderfoot.cfg file
+
+    Returns:
+        True if import was successful
+    """
+    if not requests:
+        print("Error: requests library required for API import")
+        print("Install with: pip install requests")
+        return False
+
+    if not cfg_path.exists():
+        print(f"Error: Config file not found: {cfg_path}")
+        return False
+
+    try:
+        # Get CSRF token
+        print(f"Connecting to {base_url}...")
+        token = get_csrf_token(base_url)
+        print(f"Got CSRF token: {token[:8]}...")
+
+        # Read config file
+        with open(cfg_path, "rb") as f:
+            cfg_content = f.read()
+
+        # Submit the form with file upload
+        files = {
+            "configFile": ("spiderfoot.cfg", cfg_content, "text/plain")
+        }
+        data = {
+            "allopts": "",
+            "token": token
+        }
+
+        print("Importing API keys...")
+        response = requests.post(
+            f"{base_url}/savesettings",
+            data=data,
+            files=files,
+            timeout=30,
+            allow_redirects=False
+        )
+
+        # Success is indicated by a redirect to /opts
+        if response.status_code in (302, 303) or response.status_code == 200:
+            print("API keys imported successfully!")
+            return True
+        else:
+            print(f"Import may have failed. Status: {response.status_code}")
+            return False
+
+    except requests.exceptions.ConnectionError:
+        print(f"Error: Could not connect to {base_url}")
+        print("Make sure SpiderFoot is running")
+        return False
+    except Exception as e:
+        print(f"Error importing config: {e}")
+        return False
 
 
 def main():
@@ -376,6 +470,17 @@ def main():
         type=int,
         default=60,
         help="Timeout in seconds when waiting for database"
+    )
+    parser.add_argument(
+        "--import",
+        dest="do_import",
+        action="store_true",
+        help="Import config via SpiderFoot web API"
+    )
+    parser.add_argument(
+        "--url",
+        default="http://localhost:5001",
+        help="SpiderFoot base URL (default: http://localhost:5001)"
     )
 
     args = parser.parse_args()
@@ -414,15 +519,37 @@ def main():
             print(f"Generated {cfg_path} for manual import")
             sys.exit(1)
 
-    if args.db_path.exists():
-        configured = configure_module_options(args.db_path, api_keys)
-        print(f"Configured {configured} API key(s) in database")
-    else:
+    if args.db_path.exists() and not args.do_import:
+        # Only try database approach if we're not using API import
+        try:
+            configured = configure_module_options(args.db_path, api_keys)
+            print(f"Configured {configured} API key(s) in database")
+        except Exception as e:
+            print(f"Database configuration failed: {e}")
+            print("Will use API import if --import flag is set")
+    elif not args.do_import:
         print(f"Database not found at {args.db_path}")
         # Generate cfg file as fallback
         cfg_path = Path("spiderfoot.cfg")
         generate_spiderfoot_cfg(api_keys, cfg_path)
         print(f"Generated {cfg_path} for manual import after SpiderFoot starts")
+
+    # Import via API if requested
+    if args.do_import:
+        # Determine config file path
+        if args.generate_cfg:
+            cfg_path = args.generate_cfg
+        else:
+            cfg_path = args.db_path.parent / "spiderfoot.cfg"
+            if not cfg_path.exists():
+                cfg_path = Path("spiderfoot.cfg")
+
+        if cfg_path.exists():
+            success = import_config_via_api(args.url, cfg_path)
+            sys.exit(0 if success else 1)
+        else:
+            print(f"No config file found to import")
+            sys.exit(1)
 
 
 if __name__ == "__main__":
