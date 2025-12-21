@@ -6,7 +6,9 @@ A Docker-based lab environment for automating OSINT reconnaissance with [SpiderF
 
 SpiderFoot automates open-source intelligence gathering across 200+ modules. This lab provides:
 
-- **Docker Compose environment** with SpiderFoot and test targets
+- **Docker Compose environment** with SpiderFoot and realistic test targets
+- **Shadow IT simulation** with 15+ subdomains mimicking common attack surface patterns
+- **Mock breach API** for credential exposure testing without external dependencies
 - **CLI tool (`sf-cli`)** for programmatic scan control
 - **AI integration pattern** for piping results to Claude Code for interpretation
 
@@ -63,12 +65,125 @@ uv run sf-cli results --scan-id <SCAN_ID> --format json | \
 
 ## Lab Services
 
+### Core Infrastructure
+
 | Service | URL | Description |
 |---------|-----|-------------|
 | SpiderFoot | http://localhost:5001 | OSINT automation web UI |
-| Web Target | http://localhost:8080 | Fake company site with exposed info |
+| DNS Server | localhost:5353 | dnsmasq for *.acme-corp.lab resolution |
+| Breach API | http://localhost:5050 | Mock HIBP-style breach database |
+
+### Acme Corp Attack Surface (acme-corp.lab)
+
+The lab simulates a realistic company attack surface with shadow IT patterns commonly found during real engagements:
+
+| Subdomain | Host Port | IP Address | What It Simulates |
+|-----------|-----------|------------|-------------------|
+| www.acme-corp.lab | 8080 | 172.28.0.10 | Production website |
+| intranet.acme-corp.lab | 8080 | 172.28.0.10 | Internal portal (exposed) |
+| dev.acme-corp.lab | 8082 | 172.28.0.11 | Dev server with debug enabled |
+| test.acme-corp.lab | 8082 | 172.28.0.11 | Test environment (debug mode) |
+| jenkins.acme-corp.lab | 8082 | 172.28.0.11 | CI/CD server (unauthenticated) |
+| staging.acme-corp.lab | 8083 | 172.28.0.12 | Forgotten WordPress 4.9.8 |
+| admin.acme-corp.lab | 8083 | 172.28.0.12 | Admin panel (default creds) |
+| api.acme-corp.lab | 8084 | 172.28.0.13 | Exposed Swagger documentation |
+| grafana.acme-corp.lab | 8084 | 172.28.0.13 | Monitoring dashboard |
+| old.acme-corp.lab | 8085 | 172.28.0.14 | Legacy server (PHP 5.4) |
+| ftp.acme-corp.lab | 8085 | 172.28.0.14 | FTP server nobody remembers |
+| files.acme-corp.lab | 8086 | 172.28.0.15 | File server with exposed .git |
+| backup.acme-corp.lab | 8086 | 172.28.0.15 | Backup server (directory listing) |
+| vpn.acme-corp.lab | 8087 | 172.28.0.16 | VPN portal with version disclosure |
+| shop.acme-corp.lab | 3000 | 172.28.0.30 | E-commerce (Juice Shop) |
+| dvwa.acme-corp.lab | 8081 | 172.28.0.31 | Training app (DVWA) |
+
+### Vulnerable Web Apps
+
+| Service | URL | Description |
+|---------|-----|-------------|
 | Juice Shop | http://localhost:3000 | OWASP vulnerable web app |
 | DVWA | http://localhost:8081 | Damn Vulnerable Web App |
+
+## DNS Configuration
+
+The lab includes a dnsmasq server for resolving `*.acme-corp.lab` subdomains. To use subdomain resolution:
+
+### Option 1: Query the Lab DNS Directly
+
+```bash
+# Resolve subdomains via lab DNS
+dig @localhost -p 5353 dev.acme-corp.lab
+dig @localhost -p 5353 api.acme-corp.lab
+```
+
+### Option 2: Configure Host DNS (macOS/Linux)
+
+Add the lab DNS as a resolver for the `.lab` TLD:
+
+```bash
+# macOS
+sudo mkdir -p /etc/resolver
+echo "nameserver 127.0.0.1\nport 5353" | sudo tee /etc/resolver/lab
+
+# Linux (systemd-resolved)
+# Add to /etc/systemd/resolved.conf.d/lab.conf
+[Resolve]
+DNS=127.0.0.1#5353
+Domains=~lab
+```
+
+### Option 3: Configure SpiderFoot to Use Lab DNS
+
+SpiderFoot is already configured to use the lab's DNS server (172.28.0.2) for internal resolution.
+
+## Mock Breach API
+
+The lab includes a local breach database API that simulates Have I Been Pwned functionality. This allows credential exposure demos without external API keys.
+
+### Endpoints
+
+```bash
+# Check a specific email
+curl http://localhost:5050/breaches/email/jsmith@acme-corp.lab
+
+# Check all emails for a domain
+curl http://localhost:5050/breaches/domain/acme-corp.lab
+
+# Health check
+curl http://localhost:5050/health
+```
+
+### Exposed Emails in the Mock Database
+
+| Email | Breaches |
+|-------|----------|
+| jsmith@acme-corp.lab | AcmeDataLeak2023, LegacySystemLeak |
+| it.admin@acme-corp.lab | LegacySystemLeak, PhishingCampaign2024 |
+| sarah.ops@acme-corp.lab | AcmeDataLeak2023 |
+| bob.developer@acme-corp.lab | GitHubTokenLeak2024, AcmeDataLeak2023 |
+| hr@acme-corp.lab | PhishingCampaign2024 |
+
+### Using with SpiderFoot
+
+The lab includes custom SpiderFoot modules that integrate with the breach API automatically:
+
+| Module | Purpose |
+|--------|---------|
+| `sfp_breach_api` | Checks discovered emails against the local breach database |
+| `sfp_email_lab` | Email extractor that accepts `.lab` TLD (standard module rejects non-internet TLDs) |
+
+These modules are included in the `footprint` and `investigate` scan profiles. When you scan `acme-corp.lab`, SpiderFoot will:
+
+1. Crawl web pages and extract email addresses (`sfp_email_lab`)
+2. Check each email against the breach database (`sfp_breach_api`)
+3. Produce `EMAILADDR_COMPROMISED` events for matches
+
+```bash
+# Scan and check for breached credentials
+uv run sf-cli scan --target acme-corp.lab --profile footprint --wait
+
+# View compromised emails
+uv run sf-cli results --scan-id $SCAN_ID --type EMAILADDR_COMPROMISED
+```
 
 ## CLI Reference
 
@@ -175,6 +290,69 @@ uv run sf-cli results --scan-id $SCAN_ID --format json | \
     Produce a risk score (Low/Medium/High) with justification."
 ```
 
+### Shadow IT Discovery (Lab)
+
+Use the lab to practice finding forgotten infrastructure:
+
+```bash
+# Scan the lab domain
+uv run sf-cli scan --target acme-corp.lab --profile footprint --wait
+
+# Analyze discovered subdomains
+uv run sf-cli results --scan-id $SCAN_ID --format json | \
+  claude -p "Analyze this attack surface scan. Identify:
+    1) Shadow IT patterns (dev, staging, test servers)
+    2) Exposed internal tools (Jenkins, GitLab, Grafana)
+    3) Legacy/forgotten systems
+    4) Information disclosure risks
+    Prioritize findings by exploitability."
+```
+
+### Credential Exposure Check (Lab)
+
+Test credential exposure workflows with the mock breach API:
+
+```bash
+# Check breach database for the domain
+curl http://localhost:5050/breaches/domain/acme-corp.lab | \
+  claude -p "Analyze these breach exposures. For each affected user:
+    1) Assess risk based on breach types
+    2) Recommend immediate actions
+    3) Identify patterns (are admins or devs more exposed?)"
+```
+
+## External Legal Targets
+
+These external services explicitly permit security scanning for educational purposes:
+
+| Target | URL | What You Can Practice |
+|--------|-----|----------------------|
+| ScanMe Nmap | scanme.nmap.org | Port scanning, service detection |
+| TestPHP Vulnweb | testphp.vulnweb.com | Web app vuln scanning (Acunetix) |
+| TestHTML5 Vulnweb | testhtml5.vulnweb.com | Modern web app scanning |
+| TestASPNET Vulnweb | testasp.vulnweb.com | ASP.NET vulnerability scanning |
+| HackTheBox | *.hackthebox.com | CTF-style scanning (requires account) |
+| TryHackMe | *.tryhackme.com | CTF-style scanning (requires account) |
+
+### Usage Notes
+
+- **Always verify current terms**: Check each site's scanning policy before use
+- **Rate limiting**: Be respectful of resources, don't flood with requests
+- **Passive preferred**: Start with passive scans before active enumeration
+- **Educational only**: These are for learning, not offensive operations
+
+### Example: External Passive Scan
+
+```bash
+# Passive scan of a legal target (no direct probing)
+uv run sf-cli scan --target testphp.vulnweb.com --profile passive --wait
+
+# Analyze external reconnaissance
+uv run sf-cli results --scan-id $SCAN_ID --format json | \
+  claude -p "Analyze this passive reconnaissance of a legal test target.
+    Summarize what can be learned without touching the target directly."
+```
+
 ## API Keys for Enhanced Scanning
 
 Many SpiderFoot modules require API keys from third-party services. You can configure these in two ways:
@@ -195,10 +373,36 @@ The `.env` file is gitignored, so your keys stay private. **API keys are automat
 
 **Example `.env` entries:**
 ```bash
+# API Keys
 SFP_SHODAN_API_KEY=your_shodan_key_here
 SFP_VIRUSTOTAL_API_KEY=your_virustotal_key_here
 SFP_HUNTER_API_KEY=your_hunter_key_here
+
+# Module Options (SFOPT_<MODULE>_<OPTION>=value)
+SFOPT__STOR_DB_MAXSTORAGE=0    # Store full web content (required for email extraction)
+SFOPT_SPIDER_MAXPAGES=100      # Limit pages crawled per domain
 ```
+
+### Module Options
+
+Beyond API keys, you can configure SpiderFoot module options via environment variables:
+
+```
+SFOPT_<MODULE>_<OPTION>=value
+```
+
+**Format rules:**
+- Module names are uppercased without the `sfp_` prefix
+- Modules with double underscores (like `sfp__stor_db`) use a leading underscore
+
+**Examples:**
+| Environment Variable | SpiderFoot Setting |
+|---------------------|-------------------|
+| `SFOPT_SPIDER_MAXPAGES=100` | `sfp_spider:maxpages=100` |
+| `SFOPT__STOR_DB_MAXSTORAGE=0` | `sfp__stor_db:maxstorage=0` |
+| `SFOPT_PORTSCAN_TCP_PORTS=22,80,443` | `sfp_portscan_tcp:ports=22,80,443` |
+
+**Important:** The `SFOPT__STOR_DB_MAXSTORAGE=0` setting is required for email extraction to work. The default (1024 bytes) truncates web content before emails can be found.
 
 **Manual import (if needed):**
 ```bash

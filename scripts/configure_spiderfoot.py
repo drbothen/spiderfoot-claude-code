@@ -1,24 +1,33 @@
 #!/usr/bin/env python3
 """
-Configure SpiderFoot API Keys from Environment Variables
+Configure SpiderFoot API Keys and Module Options from Environment Variables
 
-This script reads API keys from environment variables (or .env file) and
-seeds them into SpiderFoot's SQLite database before the web server starts.
+This script reads API keys and module options from environment variables
+(or .env file) and seeds them into SpiderFoot's configuration.
 
-Environment variable format:
+Environment variable formats:
+
+1. API Keys (predefined mappings):
     SFP_MODULENAME_OPTIONNAME=value
+    Examples:
+        SFP_SHODAN_API_KEY=abc123
+        SFP_VIRUSTOTAL_API_KEY=xyz789
 
-Examples:
-    SFP_SHODAN_API_KEY=abc123
-    SFP_VIRUSTOTAL_API_KEY=xyz789
+2. Generic Module Options (any SpiderFoot module setting):
+    SFOPT_<MODULE>_<OPTION>=value
+    The module name uses underscores (e.g., _stor_db becomes __stor_db)
+    Examples:
+        SFOPT__STOR_DB_MAXSTORAGE=0      -> sfp__stor_db:maxstorage=0
+        SFOPT_SPIDER_MAXPAGES=100        -> sfp_spider:maxpages=100
+        SFOPT_BREACH_API_API_URL=http://... -> sfp_breach_api:api_url=...
 
 Usage:
     python configure_api_keys.py [--db-path /path/to/spiderfoot.db]
 
 The script will:
 1. Wait for the SpiderFoot database to exist (with timeout)
-2. Read API keys from environment variables
-3. Update the database with the configured keys
+2. Read API keys and module options from environment variables
+3. Update the database/config with the configured settings
 """
 
 import argparse
@@ -243,6 +252,76 @@ def get_api_keys_from_env() -> dict:
     return api_keys
 
 
+def get_module_options_from_env() -> dict:
+    """
+    Extract generic module options from SFOPT_* environment variables.
+
+    Format: SFOPT_<MODULE>_<OPTION>=value
+    - MODULE: Module name without 'sfp_' prefix, uppercase, underscores preserved
+    - OPTION: Option name, uppercase, converted to lowercase
+
+    Examples:
+        SFOPT__STOR_DB_MAXSTORAGE=0 -> sfp__stor_db:maxstorage=0
+        SFOPT_SPIDER_MAXPAGES=100 -> sfp_spider:maxpages=100
+
+    Note: Double underscores in module names (like sfp__stor_db) are represented
+    by starting with underscore: SFOPT__STOR_DB_... -> sfp__stor_db
+    """
+    options = {}
+
+    for env_var, value in os.environ.items():
+        if not env_var.startswith("SFOPT_"):
+            continue
+
+        # Remove SFOPT_ prefix
+        rest = env_var[6:]  # After "SFOPT_"
+
+        if not rest or "_" not in rest:
+            continue
+
+        # Handle module names that start with underscore (like __stor_db)
+        # SFOPT__STOR_DB_MAXSTORAGE -> module=__stor_db, option=maxstorage
+        if rest.startswith("_"):
+            # Double underscore module (e.g., __stor_db)
+            # rest = "_STOR_DB_MAXSTORAGE"
+            # We need to find where module ends and option begins
+            # The option is typically a single word at the end
+            parts = rest.split("_")
+            # parts = ['', 'STOR', 'DB', 'MAXSTORAGE']
+            # Module is parts[0:3] joined = "_STOR_DB" -> sfp__stor_db
+            # Option is parts[3:] = "MAXSTORAGE" -> maxstorage
+
+            # Assume option is the last segment
+            if len(parts) >= 2:
+                option = parts[-1].lower()
+                module_part = "_".join(parts[:-1]).lower()  # "_stor_db"
+                module_name = f"sfp_{module_part}"  # "sfp__stor_db"
+
+                if option:
+                    if module_name not in options:
+                        options[module_name] = {}
+                    options[module_name][option] = value
+        else:
+            # Regular module name (e.g., spider, breach_api)
+            # SFOPT_SPIDER_MAXPAGES -> module=spider, option=maxpages
+            # SFOPT_BREACH_API_API_URL -> module=breach_api, option=api_url
+            parts = rest.split("_")
+
+            # Assume option is the last segment for simplicity
+            # For more complex cases, could try multiple split points
+            if len(parts) >= 2:
+                option = parts[-1].lower()
+                module_part = "_".join(parts[:-1]).lower()
+                module_name = f"sfp_{module_part}"
+
+                if option:
+                    if module_name not in options:
+                        options[module_name] = {}
+                    options[module_name][option] = value
+
+    return options
+
+
 def wait_for_database(db_path: Path, timeout: int = 60) -> bool:
     """Wait for the SpiderFoot database to exist."""
     start_time = time.time()
@@ -441,7 +520,7 @@ def import_config_via_api(base_url: str, cfg_path: Path) -> bool:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Configure SpiderFoot API keys from environment variables"
+        description="Configure SpiderFoot API keys and module options from environment variables"
     )
     parser.add_argument(
         "--db-path",
@@ -496,18 +575,42 @@ def main():
     # Get API keys from environment
     api_keys = get_api_keys_from_env()
 
-    if not api_keys:
-        print("No API keys found in environment variables")
-        print("Set variables like SFP_SHODAN_API_KEY=your_key")
+    # Get generic module options from environment
+    module_options = get_module_options_from_env()
+
+    # Merge API keys and module options
+    all_config = {}
+    for module, options in api_keys.items():
+        if module not in all_config:
+            all_config[module] = {}
+        all_config[module].update(options)
+
+    for module, options in module_options.items():
+        if module not in all_config:
+            all_config[module] = {}
+        all_config[module].update(options)
+
+    if not all_config:
+        print("No configuration found in environment variables")
+        print("Set variables like:")
+        print("  SFP_SHODAN_API_KEY=your_key (API keys)")
+        print("  SFOPT__STOR_DB_MAXSTORAGE=0 (module options)")
         sys.exit(0)
 
-    print(f"Found API keys for {len(api_keys)} modules:")
-    for module in api_keys:
-        print(f"  - {module}: {len(api_keys[module])} option(s)")
+    if api_keys:
+        print(f"Found API keys for {len(api_keys)} modules:")
+        for module in api_keys:
+            print(f"  - {module}: {len(api_keys[module])} option(s)")
+
+    if module_options:
+        print(f"Found module options for {len(module_options)} modules:")
+        for module, opts in module_options.items():
+            for opt, val in opts.items():
+                print(f"  - {module}:{opt}={val}")
 
     # Generate spiderfoot.cfg if requested
     if args.generate_cfg:
-        generate_spiderfoot_cfg(api_keys, args.generate_cfg)
+        generate_spiderfoot_cfg(all_config, args.generate_cfg)
 
     # Configure database
     if args.wait:
@@ -515,15 +618,15 @@ def main():
             print(f"Timeout waiting for database at {args.db_path}")
             # Generate cfg file as fallback
             cfg_path = args.db_path.parent / "spiderfoot.cfg"
-            generate_spiderfoot_cfg(api_keys, cfg_path)
+            generate_spiderfoot_cfg(all_config, cfg_path)
             print(f"Generated {cfg_path} for manual import")
             sys.exit(1)
 
     if args.db_path.exists() and not args.do_import:
         # Only try database approach if we're not using API import
         try:
-            configured = configure_module_options(args.db_path, api_keys)
-            print(f"Configured {configured} API key(s) in database")
+            configured = configure_module_options(args.db_path, all_config)
+            print(f"Configured {configured} option(s) in database")
         except Exception as e:
             print(f"Database configuration failed: {e}")
             print("Will use API import if --import flag is set")
@@ -531,7 +634,7 @@ def main():
         print(f"Database not found at {args.db_path}")
         # Generate cfg file as fallback
         cfg_path = Path("spiderfoot.cfg")
-        generate_spiderfoot_cfg(api_keys, cfg_path)
+        generate_spiderfoot_cfg(all_config, cfg_path)
         print(f"Generated {cfg_path} for manual import after SpiderFoot starts")
 
     # Import via API if requested

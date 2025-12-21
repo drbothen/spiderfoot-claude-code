@@ -41,15 +41,16 @@ PROFILE_MODULES = {
         "sfp_dnsdumpster", "sfp_archiveorg"
     ],
     "footprint": [
-        "sfp_spider", "sfp_dnsresolve", "sfp_whois", "sfp_dns",
+        "sfp_spider", "sfp_dnsresolve", "sfp_dnsbrute", "sfp_whois", "sfp_dns",
         "sfp_dnsdumpster", "sfp_archiveorg", "sfp_portscan_tcp",
-        "sfp_webanalytics", "sfp_webserver", "sfp_emailformat"
+        "sfp_webanalytics", "sfp_webserver", "sfp_email_lab", "sfp_emailformat",
+        "sfp_breach_api"
     ],
     "investigate": [
-        "sfp_spider", "sfp_dnsresolve", "sfp_whois", "sfp_dns",
+        "sfp_spider", "sfp_dnsresolve", "sfp_dnsbrute", "sfp_whois", "sfp_dns",
         "sfp_dnsdumpster", "sfp_archiveorg", "sfp_portscan_tcp",
-        "sfp_webanalytics", "sfp_webserver", "sfp_emailformat",
-        "sfp_sslcert", "sfp_shodan", "sfp_threatminer"
+        "sfp_webanalytics", "sfp_webserver", "sfp_email_lab", "sfp_emailformat",
+        "sfp_sslcert", "sfp_shodan", "sfp_threatminer", "sfp_breach_api"
     ],
 }
 

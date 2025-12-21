@@ -1,13 +1,18 @@
-# SpiderFoot OSINT Lab Environment
+# SpiderFoot OSINT Lab Environment - Enhanced Edition
+# Simulates a company attack surface with shadow IT patterns
+#
 # Deploy: docker compose up -d
 # Teardown: docker compose down -v
 # Reset: docker compose down -v && docker compose up -d
 #
-# First-time setup: ./lab.sh up (will clone and build SpiderFoot)
+# First-time setup: ./lab.sh up (will build SpiderFoot)
 
 services:
+  # =============================================================================
+  # CORE INFRASTRUCTURE
+  # =============================================================================
+
   # SpiderFoot OSINT automation tool
-  # Built from official GitHub repo (no official Docker Hub image)
   spiderfoot:
     build:
       context: https://github.com/smicallef/spiderfoot.git
@@ -22,9 +27,14 @@ services:
       - spiderfoot-data:/var/lib/spiderfoot
       - ./output:/output
       - ./scripts:/app/scripts:ro
+      - ./modules/sfp_breach_api.py:/home/spiderfoot/modules/sfp_breach_api.py:ro
+      - ./modules/sfp_email_lab.py:/home/spiderfoot/modules/sfp_email_lab.py:ro
     entrypoint: ["/bin/sh", "/app/scripts/entrypoint.sh"]
+    dns:
+      - 172.28.0.2
     networks:
-      - osint-lab
+      osint-lab:
+        ipv4_address: 172.28.0.5
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:5001/"]
@@ -32,8 +42,29 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    depends_on:
+      - dnsmasq
 
-  # Local web server target (simulates company website)
+  # DNS server for lab subdomain resolution
+  dnsmasq:
+    image: jpillora/dnsmasq:latest
+    container_name: dnsmasq
+    ports:
+      - "5353:53/udp"
+      - "5353:53/tcp"
+    volumes:
+      - ./configs/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf:ro
+    cap_add:
+      - NET_ADMIN
+    networks:
+      osint-lab:
+        ipv4_address: 172.28.0.2
+    restart: unless-stopped
+
+  # =============================================================================
+  # PRIMARY DOMAIN - www.acme-corp.lab (Production Website)
+  # =============================================================================
+
   web-target:
     image: nginx:alpine
     container_name: web-target
@@ -43,12 +74,146 @@ services:
       - ./configs/web-target:/usr/share/nginx/html:ro
     networks:
       osint-lab:
+        ipv4_address: 172.28.0.10
         aliases:
-          - www.lab.local
-          - lab.local
+          - www.acme-corp.lab
+          - acme-corp.lab
+          - mail.acme-corp.lab
+          - intranet.acme-corp.lab
     restart: unless-stopped
 
-  # OWASP Juice Shop (vulnerable web app for realistic scanning)
+  # =============================================================================
+  # SHADOW IT TARGETS - Subdomains with security issues
+  # =============================================================================
+
+  # dev.acme-corp.lab - Development server with debug enabled
+  dev-target:
+    image: nginx:alpine
+    container_name: dev-target
+    ports:
+      - "8082:80"
+    volumes:
+      - ./configs/dev-target:/usr/share/nginx/html:ro
+    networks:
+      osint-lab:
+        ipv4_address: 172.28.0.11
+        aliases:
+          - dev.acme-corp.lab
+          - test.acme-corp.lab
+          - jenkins.acme-corp.lab
+          - gitlab.acme-corp.lab
+    restart: unless-stopped
+
+  # staging.acme-corp.lab - Forgotten staging with old WordPress
+  staging-target:
+    image: nginx:alpine
+    container_name: staging-target
+    ports:
+      - "8083:80"
+    volumes:
+      - ./configs/staging-target:/usr/share/nginx/html:ro
+    networks:
+      osint-lab:
+        ipv4_address: 172.28.0.12
+        aliases:
+          - staging.acme-corp.lab
+          - admin.acme-corp.lab
+          - portal.acme-corp.lab
+    restart: unless-stopped
+
+  # api.acme-corp.lab - Exposed API documentation
+  api-target:
+    image: nginx:alpine
+    container_name: api-target
+    ports:
+      - "8084:80"
+    volumes:
+      - ./configs/api-target:/usr/share/nginx/html:ro
+    networks:
+      osint-lab:
+        ipv4_address: 172.28.0.13
+        aliases:
+          - api.acme-corp.lab
+          - grafana.acme-corp.lab
+    restart: unless-stopped
+
+  # old.acme-corp.lab - Legacy server nobody remembers
+  old-target:
+    image: nginx:alpine
+    container_name: old-target
+    ports:
+      - "8085:80"
+    volumes:
+      - ./configs/old-target:/usr/share/nginx/html:ro
+    networks:
+      osint-lab:
+        ipv4_address: 172.28.0.14
+        aliases:
+          - old.acme-corp.lab
+          - legacy.acme-corp.lab
+          - ftp.acme-corp.lab
+    restart: unless-stopped
+
+  # files.acme-corp.lab - File server with exposed .git
+  files-target:
+    image: nginx:alpine
+    container_name: files-target
+    ports:
+      - "8086:80"
+    volumes:
+      - ./configs/files-target:/usr/share/nginx/html:ro
+    networks:
+      osint-lab:
+        ipv4_address: 172.28.0.15
+        aliases:
+          - files.acme-corp.lab
+          - backup.acme-corp.lab
+    restart: unless-stopped
+
+  # vpn.acme-corp.lab - Exposed VPN portal
+  vpn-target:
+    image: nginx:alpine
+    container_name: vpn-target
+    ports:
+      - "8087:80"
+    volumes:
+      - ./configs/vpn-target:/usr/share/nginx/html:ro
+    networks:
+      osint-lab:
+        ipv4_address: 172.28.0.16
+        aliases:
+          - vpn.acme-corp.lab
+    restart: unless-stopped
+
+  # =============================================================================
+  # BREACH DATABASE - Mock HIBP-style API
+  # =============================================================================
+
+  breach-api:
+    build:
+      context: ./configs/breach-api
+      dockerfile: Dockerfile
+    image: breach-api:local
+    container_name: breach-api
+    ports:
+      - "5050:5000"
+    networks:
+      osint-lab:
+        ipv4_address: 172.28.0.20
+        aliases:
+          - breach-api.lab.local
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # =============================================================================
+  # VULNERABLE WEB APPS (for realistic scanning targets)
+  # =============================================================================
+
+  # OWASP Juice Shop
   juice-shop:
     image: bkimminich/juice-shop:latest
     container_name: juice-shop
@@ -56,8 +221,9 @@ services:
       - "3000:3000"
     networks:
       osint-lab:
+        ipv4_address: 172.28.0.30
         aliases:
-          - shop.lab.local
+          - shop.acme-corp.lab
     restart: unless-stopped
 
   # Damn Vulnerable Web Application
@@ -70,9 +236,14 @@ services:
       - MYSQL_PASS=dvwa
     networks:
       osint-lab:
+        ipv4_address: 172.28.0.31
         aliases:
-          - dvwa.lab.local
+          - dvwa.acme-corp.lab
     restart: unless-stopped
+
+# =============================================================================
+# VOLUMES AND NETWORKS
+# =============================================================================
 
 volumes:
   spiderfoot-data:
@@ -82,3 +253,8 @@ networks:
   osint-lab:
     name: osint-lab
     driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
+          gateway: 172.28.0.1

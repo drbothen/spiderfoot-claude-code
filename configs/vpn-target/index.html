@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acme VPN Portal</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; margin: 0; padding: 0; }
+        .container { max-width: 400px; margin: 50px auto; background: #16213e; padding: 30px; border-radius: 8px; }
+        h1 { color: #0f3460; background: #e94560; padding: 15px; margin: -30px -30px 20px; border-radius: 8px 8px 0 0; text-align: center; }
+        input { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #e94560; color: white; border: none; cursor: pointer; font-size: 16px; }
+        .links { margin-top: 20px; font-size: 12px; }
+        .links a { color: #0f3460; }
+        .footer { text-align: center; margin-top: 30px; font-size: 11px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 Acme VPN Access</h1>
+
+        <form action="/vpn/auth" method="post">
+            <label>Username:</label>
+            <input type="text" name="username" placeholder="Enter your username">
+
+            <label>Password:</label>
+            <input type="password" name="password" placeholder="Enter your password">
+
+            <label>2FA Code:</label>
+            <input type="text" name="otp" placeholder="6-digit code">
+
+            <button type="submit">Connect to VPN</button>
+        </form>
+
+        <div class="links">
+            <p><a href="/vpn/download">Download VPN Client</a></p>
+            <p><a href="/vpn/setup-guide.pdf">Setup Guide (PDF)</a></p>
+            <p><a href="/vpn/forgot-password">Forgot Password?</a></p>
+        </div>
+
+        <div class="footer">
+            <p>OpenVPN Access Server 2.9.0</p>
+            <p>For support: <a href="mailto:vpn.support@acme-corp.lab">vpn.support@acme-corp.lab</a></p>
+            <p>IT Helpdesk: <a href="mailto:helpdesk@acme-corp.lab">helpdesk@acme-corp.lab</a></p>
+            <p style="color: #e94560;">⚠️ This portal should not be publicly accessible</p>
+        </div>
+    </div>
+
+    <!-- Debug info left in production -->
+    <!-- VPN Server: vpn-primary.internal.acme-corp.lab -->
+    <!-- Backup: vpn-backup.internal.acme-corp.lab -->
+    <!-- Config: /etc/openvpn/server.conf -->
+</body>
+</html>

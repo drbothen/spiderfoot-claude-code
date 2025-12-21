@@ -10,12 +10,19 @@
 
 set -e
 
-CONFIG_SCRIPT="/app/scripts/configure_api_keys.py"
+CONFIG_SCRIPT="/app/scripts/configure_spiderfoot.py"
 CFG_OUTPUT="/var/lib/spiderfoot/spiderfoot.cfg"
 SF_URL="http://localhost:5001"
 
 echo "=== SpiderFoot OSINT Lab ==="
 echo "Starting with API key configuration..."
+
+# Copy custom modules if they exist
+CUSTOM_MODULES="/home/spiderfoot/modules-custom"
+if [ -d "$CUSTOM_MODULES" ] && [ "$(ls -A $CUSTOM_MODULES 2>/dev/null)" ]; then
+    echo "Installing custom modules..."
+    cp -v "$CUSTOM_MODULES"/*.py /home/spiderfoot/modules/ 2>/dev/null || true
+fi
 
 # Check if we have any API keys to configure
 API_KEY_COUNT=$(env | grep -c "^SFP_" || true)

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acme API Documentation</title>
+    <!-- Shadow IT: Exposed API documentation -->
+    <meta name="generator" content="Swagger UI 3.52.0">
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@3/swagger-ui.css">
+</head>
+<body>
+    <header style="background: #1b1b1b; color: white; padding: 20px;">
+        <h1>Acme Corporation API</h1>
+        <p>Internal API Documentation - v2.1.0</p>
+    </header>
+
+    <main style="padding: 20px;">
+        <div class="warning" style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; margin-bottom: 20px;">
+            <strong>Note:</strong> This API documentation is for internal use only.
+        </div>
+
+        <h2>Available Endpoints</h2>
+
+        <h3>Authentication</h3>
+        <pre style="background: #f4f4f4; padding: 10px;">
+POST /api/v2/auth/login
+POST /api/v2/auth/token/refresh
+GET  /api/v2/auth/user
+        </pre>
+
+        <h3>Customer Data</h3>
+        <pre style="background: #f4f4f4; padding: 10px;">
+GET  /api/v2/customers
+GET  /api/v2/customers/{id}
+POST /api/v2/customers
+PUT  /api/v2/customers/{id}
+DELETE /api/v2/customers/{id}
+        </pre>
+
+        <h3>SCADA Integration</h3>
+        <pre style="background: #f4f4f4; padding: 10px;">
+GET  /api/v2/scada/devices
+GET  /api/v2/scada/readings/{device_id}
+POST /api/v2/scada/commands
+GET  /api/v2/scada/alerts
+        </pre>
+
+        <h3>Internal Endpoints (Deprecated)</h3>
+        <pre style="background: #ffe0e0; padding: 10px;">
+GET  /api/v1/debug/config     # Deprecated - exposes config
+GET  /api/v1/admin/users      # Deprecated - no auth required
+POST /api/v1/backup/trigger   # Deprecated - security issue
+        </pre>
+
+        <h2>API Contact</h2>
+        <p>API Team: <a href="mailto:api.team@acme-corp.lab">api.team@acme-corp.lab</a></p>
+        <p>Integration Support: <a href="mailto:integrations@acme-corp.lab">integrations@acme-corp.lab</a></p>
+
+        <h2>OpenAPI Specification</h2>
+        <p><a href="/api/v2/openapi.json">Download OpenAPI 3.0 Spec</a></p>
+        <p><a href="/swagger-ui/">Interactive Documentation</a></p>
+    </main>
+
+    <footer style="background: #f4f4f4; padding: 10px; margin-top: 20px;">
+        <p>API Version: 2.1.0 | Framework: FastAPI 0.68.0 | Python 3.9.7</p>
+    </footer>
+</body>
+</html>

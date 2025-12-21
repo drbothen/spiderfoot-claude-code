@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acme File Server</title>
+</head>
+<body>
+    <h1>Acme Internal File Server</h1>
+    <p>Directory listing enabled for authorized users.</p>
+
+    <h2>Available Directories</h2>
+    <ul>
+        <li><a href="/public/">📁 public/</a> - Public documents</li>
+        <li><a href="/marketing/">📁 marketing/</a> - Marketing materials</li>
+        <li><a href="/engineering/">📁 engineering/</a> - Engineering docs</li>
+        <li><a href="/hr/">📁 hr/</a> - HR documents (restricted)</li>
+        <li><a href="/.git/">📁 .git/</a> - [ERROR: Should not be accessible]</li>
+        <li><a href="/backups/">📁 backups/</a> - System backups</li>
+    </ul>
+
+    <h3>Recent Files</h3>
+    <table border="1" cellpadding="5">
+        <tr><th>File</th><th>Modified</th><th>Size</th></tr>
+        <tr><td>employee_directory_2024.xlsx</td><td>2024-01-15</td><td>2.4 MB</td></tr>
+        <tr><td>network_diagram_v3.pdf</td><td>2024-02-20</td><td>1.1 MB</td></tr>
+        <tr><td>vendor_contacts.csv</td><td>2024-03-01</td><td>45 KB</td></tr>
+        <tr><td>passwords_backup.txt.bak</td><td>2023-06-15</td><td>12 KB</td></tr>
+    </table>
+
+    <h3>File Server Admin</h3>
+    <p>Admin: <a href="mailto:fileserver.admin@acme-corp.lab">fileserver.admin@acme-corp.lab</a></p>
+    <p>IT Ops: <a href="mailto:it.ops@acme-corp.lab">it.ops@acme-corp.lab</a></p>
+
+    <footer>
+        <p>Nginx/1.18.0 | Ubuntu 20.04 LTS</p>
+    </footer>
+</body>
+</html>

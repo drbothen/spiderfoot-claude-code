@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acme Staging - Customer Portal</title>
+    <!-- Shadow IT: Forgotten staging site with old WordPress -->
+    <meta name="generator" content="WordPress 4.9.8">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="stylesheet" href="/wp-content/themes/twentyseventeen/style.css">
+</head>
+<body>
+    <header>
+        <h1>Acme Customer Portal</h1>
+        <p class="staging-banner" style="background: orange; color: white; padding: 10px;">
+            STAGING ENVIRONMENT - Last updated: January 2022
+        </p>
+    </header>
+
+    <main>
+        <h2>Welcome to the Acme Customer Portal</h2>
+        <p>This portal provides access to your industrial control system dashboards.</p>
+
+        <div class="login-form">
+            <h3>Customer Login</h3>
+            <form action="/wp-login.php" method="post">
+                <input type="text" name="username" placeholder="Username">
+                <input type="password" name="password" placeholder="Password">
+                <button type="submit">Login</button>
+            </form>
+            <p><a href="/wp-admin/">Admin Login</a></p>
+        </div>
+
+        <h3>Support Contacts</h3>
+        <ul>
+            <li>Portal Support: <a href="mailto:portal.support@acme-corp.lab">portal.support@acme-corp.lab</a></li>
+            <li>Legacy Contact: <a href="mailto:webmaster@acme-corp.lab">webmaster@acme-corp.lab</a></li>
+        </ul>
+
+        <!-- Exposed plugins list -->
+        <div style="display:none">
+            Plugins: contact-form-7/4.9, yoast-seo/7.0, akismet/4.0
+            Theme: twentyseventeen 1.4
+            PHP: 7.0.33
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2022 Acme Corporation - Staging Environment</p>
+        <!-- Forgot to update this server -->
+        <p>Server: Apache/2.4.29 (Ubuntu)</p>
+    </footer>
+</body>
+</html>

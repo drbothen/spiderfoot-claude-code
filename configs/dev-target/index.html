@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acme Dev Environment</title>
+    <!-- Shadow IT indicator: Debug mode enabled -->
+    <meta name="environment" content="development">
+    <meta name="debug" content="true">
+    <!-- Exposed framework version -->
+    <meta name="generator" content="Next.js 12.0.0">
+</head>
+<body>
+    <h1>Acme Development Server</h1>
+    <p style="color: red; font-weight: bold;">⚠️ DEVELOPMENT ENVIRONMENT - NOT FOR PRODUCTION</p>
+
+    <div id="debug-panel" style="background: #ffe0e0; padding: 20px; margin: 20px 0;">
+        <h2>Debug Information</h2>
+        <pre>
+NODE_ENV: development
+DEBUG: true
+API_KEY: dev_key_12345_not_for_prod
+DATABASE_URL: mongodb://dev-db:27017/acme_dev
+REDIS_HOST: dev-redis.internal
+        </pre>
+    </div>
+
+    <h3>Available Endpoints</h3>
+    <ul>
+        <li><a href="/api/health">/api/health</a> - Health check</li>
+        <li><a href="/api/debug">/api/debug</a> - Debug info</li>
+        <li><a href="/api/users">/api/users</a> - User list (DEV ONLY)</li>
+        <li><a href="/_next/static">/_next/static</a> - Static assets</li>
+    </ul>
+
+    <h3>Developer Contacts</h3>
+    <p>Dev Lead: <a href="mailto:dev.lead@acme-corp.lab">dev.lead@acme-corp.lab</a></p>
+    <p>Backend: <a href="mailto:backend.team@acme-corp.lab">backend.team@acme-corp.lab</a></p>
+
+    <footer>
+        <p>Last deployed: 2024-03-15 by jenkins-bot</p>
+        <!-- Version leak -->
+        <p>Build: acme-frontend-dev:0.0.42-SNAPSHOT</p>
+    </footer>
+</body>
+</html>
