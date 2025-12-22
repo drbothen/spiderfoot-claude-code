@@ -1,0 +1,22 @@
+# Sample Suspicious IPs for IR Demo
+# These IPs have mock data in threatintel-api for repeatable demos
+#
+# Usage:
+#   cat sample-iocs/suspicious-ips.txt | while read ip; do
+#     uv run sf-cli scan --target "$ip" --profile ir --mock --wait
+#   done
+
+# Tor exit node - divergent intelligence demo
+# GreyNoise: benign (noise), AbuseIPDB: 87% malicious, VirusTotal: 15/90 malicious
+# Perfect for demonstrating synthesis challenges
+185.220.101.1
+
+# Known malicious C2 - all sources agree
+# GreyNoise: malicious (targeted), AbuseIPDB: 100%, VirusTotal: 45/90
+# Clear-cut malicious indicator
+91.121.155.13
+
+# Benign scanner - ScanMe.nmap.org
+# GreyNoise: benign (RIOT), AbuseIPDB: 5%, VirusTotal: 0/90
+# Demonstrates legitimate infrastructure
+45.33.32.156

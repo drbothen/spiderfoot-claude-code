@@ -1,0 +1,17 @@
+# Sample Malware Hashes for Reference
+# These are well-known malware samples from public threat reports
+# Note: Hash lookups require real VirusTotal API (not mock)
+#
+# For demo purposes, use IPs or domains with --mock flag
+
+# WannaCry ransomware (SHA256)
+# https://www.virustotal.com/gui/file/ed01ebfbc9eb5bbea545af4d01bf5f1071661840480439c6e5babe8e080e41aa
+ed01ebfbc9eb5bbea545af4d01bf5f1071661840480439c6e5babe8e080e41aa
+
+# NotPetya/Petya.A (SHA256)
+# https://www.virustotal.com/gui/file/027cc450ef5f8c5f653329641ec1fed91f694e0d229928963b30f6b0d7d3a745
+027cc450ef5f8c5f653329641ec1fed91f694e0d229928963b30f6b0d7d3a745
+
+# Emotet loader sample (SHA256)
+# https://www.virustotal.com/gui/file/d4a0fe56316a2c45b9ba9ac1005363c8d4959bf1af83a
+# Truncated - use real hash for actual lookups

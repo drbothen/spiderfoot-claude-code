@@ -1,0 +1,15 @@
+# Sample Suspicious Domains for IR Demo
+# These domains have mock data in threatintel-api for repeatable demos
+#
+# Usage:
+#   uv run sf-cli scan --target "acme-corp-benefits.com" --profile ir --mock --wait
+
+# Typosquat phishing domain - impersonates Acme Corp
+# Recently registered (5 days old), Russian registrant, no DNSSEC
+# VirusTotal: 8 vendors flag as phishing
+acme-corp-benefits.com
+
+# Suspected C2 domain - masquerades as update service
+# 30 days old, Panamanian registrant, privacy protected
+# VirusTotal: 12 vendors flag as C2/malware
+update-service.net

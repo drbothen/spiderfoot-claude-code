@@ -20,7 +20,7 @@ services:
     image: spiderfoot:local
     container_name: spiderfoot
     ports:
-      - "5001:5001"
+      - "5055:5001"  # Changed from 5001 due to port conflict
     env_file:
       - .env
     volumes:
@@ -29,6 +29,11 @@ services:
       - ./scripts:/app/scripts:ro
       - ./modules/sfp_breach_api.py:/home/spiderfoot/modules/sfp_breach_api.py:ro
       - ./modules/sfp_email_lab.py:/home/spiderfoot/modules/sfp_email_lab.py:ro
+      # Mock threat intel modules for IR demos
+      - ./modules/sfp_virustotal_mock.py:/home/spiderfoot/modules/sfp_virustotal_mock.py:ro
+      - ./modules/sfp_greynoise_mock.py:/home/spiderfoot/modules/sfp_greynoise_mock.py:ro
+      - ./modules/sfp_abuseipdb_mock.py:/home/spiderfoot/modules/sfp_abuseipdb_mock.py:ro
+      - ./modules/sfp_shodan_mock.py:/home/spiderfoot/modules/sfp_shodan_mock.py:ro
     entrypoint: ["/bin/sh", "/app/scripts/entrypoint.sh"]
     dns:
       - 172.28.0.2
@@ -50,8 +55,8 @@ services:
     image: jpillora/dnsmasq:latest
     container_name: dnsmasq
     ports:
-      - "5353:53/udp"
-      - "5353:53/tcp"
+      - "5354:53/udp"  # Changed from 5353 due to mDNS conflict
+      - "5354:53/tcp"
     volumes:
       - ./configs/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf:ro
     cap_add:
@@ -196,12 +201,40 @@ services:
     image: breach-api:local
     container_name: breach-api
     ports:
-      - "5050:5000"
+      - "5052:5000"  # Changed from 5050 due to port conflict
     networks:
       osint-lab:
         ipv4_address: 172.28.0.20
         aliases:
           - breach-api.lab.local
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # =============================================================================
+  # THREAT INTEL API - Mock VirusTotal/GreyNoise/AbuseIPDB/Shodan
+  # =============================================================================
+
+  threatintel-api:
+    build:
+      context: ./configs/threatintel-api
+      dockerfile: Dockerfile
+    image: threatintel-api:local
+    container_name: threatintel-api
+    ports:
+      - "5051:5000"
+    networks:
+      osint-lab:
+        ipv4_address: 172.28.0.21
+        aliases:
+          - threatintel-api.lab.local
+          - virustotal.lab.local
+          - greynoise.lab.local
+          - abuseipdb.lab.local
+          - shodan.lab.local
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:5000/health"]

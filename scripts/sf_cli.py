@@ -52,13 +52,48 @@ PROFILE_MODULES = {
         "sfp_webanalytics", "sfp_webserver", "sfp_email_lab", "sfp_emailformat",
         "sfp_sslcert", "sfp_shodan", "sfp_threatminer", "sfp_breach_api"
     ],
+    # IR profile: optimized for incident response IOC enrichment
+    # Focuses on threat intelligence feeds and reputation services
+    "ir": [
+        # Core network reconnaissance
+        "sfp_dnsresolve", "sfp_whois", "sfp_sslcert",
+        # Threat intelligence feeds (API keys enhance results)
+        "sfp_virustotal",      # Malware/URL reputation
+        "sfp_shodan",          # Infrastructure fingerprinting
+        "sfp_alienvault",      # AlienVault OTX threat intel
+        "sfp_greynoise",       # Internet noise vs targeted attacks
+        "sfp_abuseipdb",       # Crowdsourced IP reputation
+        "sfp_threatminer",     # Threat intel aggregation (no API)
+        # Passive DNS for pivoting
+        "sfp_robtex",          # Passive DNS (no API)
+        # Breach/credential exposure
+        "sfp_pwned",           # Have I Been Pwned
+        "sfp_breach_api",      # Breach databases
+    ],
+}
+
+# Mock profile modules - use local threatintel-api service for repeatable demos
+MOCK_PROFILE_MODULES = {
+    # IR-mock profile: uses mock threat intel modules for demos
+    # Returns deterministic data without burning real API quotas
+    "ir": [
+        # Core network reconnaissance (real modules - no external API)
+        "sfp_dnsresolve", "sfp_whois", "sfp_sslcert",
+        # Mock threat intelligence feeds (query local threatintel-api)
+        "sfp_virustotal_mock",   # Mock VirusTotal
+        "sfp_shodan_mock",       # Mock Shodan
+        "sfp_greynoise_mock",    # Mock GreyNoise
+        "sfp_abuseipdb_mock",    # Mock AbuseIPDB
+        # Breach databases (lab's local breach-api)
+        "sfp_breach_api",
+    ],
 }
 
 
 class SpiderFootClient:
     """Client for SpiderFoot REST API."""
 
-    def __init__(self, base_url: str = "http://localhost:5001"):
+    def __init__(self, base_url: str = "http://localhost:5055"):
         self.base_url = base_url.rstrip("/")
         self.session = requests.Session()
         self.session.headers.update({
@@ -84,14 +119,16 @@ class SpiderFootClient:
         return self._request("GET", "/scanlist")
 
     def start_scan(self, target: str, scan_name: str = None,
-                   profile: str = "footprint", modules: list = None) -> dict:
+                   profile: str = "footprint", modules: list = None,
+                   mock: bool = False) -> dict:
         """Start a new scan.
 
         Args:
             target: Domain, IP, email, or other target
             scan_name: Optional name for the scan
-            profile: Scan profile (footprint, investigate, passive, all)
+            profile: Scan profile (footprint, investigate, passive, ir, all)
             modules: Optional list of specific modules to use
+            mock: If True, use mock modules for repeatable demos
 
         Returns:
             dict with scan_id on success or error message
@@ -104,6 +141,9 @@ class SpiderFootClient:
             module_list = modules
         elif profile == "all":
             module_list = []  # Empty means all modules
+        elif mock and profile in MOCK_PROFILE_MODULES:
+            # Use mock modules for demos (no external API calls)
+            module_list = MOCK_PROFILE_MODULES[profile]
         else:
             module_list = PROFILE_MODULES.get(profile, PROFILE_MODULES["footprint"])
 
@@ -222,8 +262,8 @@ def main():
         description="SpiderFoot CLI for AI Coding Assistant Integration",
         epilog="Example: uv run sf-cli scan --target example.com --profile footprint"
     )
-    parser.add_argument("--url", default="http://localhost:5001",
-                        help="SpiderFoot base URL (default: http://localhost:5001)")
+    parser.add_argument("--url", default="http://localhost:5055",
+                        help="SpiderFoot base URL (default: http://localhost:5055)")
 
     subparsers = parser.add_subparsers(dest="command", help="Commands")
 
@@ -233,11 +273,13 @@ def main():
                              help="Target to scan (domain, IP, email)")
     scan_parser.add_argument("--name", "-n", help="Scan name")
     scan_parser.add_argument("--profile", "-p", default="footprint",
-                             choices=["all", "footprint", "investigate", "passive"],
-                             help="Scan profile (default: footprint)")
+                             choices=["all", "footprint", "investigate", "passive", "ir"],
+                             help="Scan profile (default: footprint). Use 'ir' for incident response IOC enrichment.")
     scan_parser.add_argument("--modules", "-m", help="Comma-separated module list")
     scan_parser.add_argument("--wait", "-w", action="store_true",
                              help="Wait for scan to complete")
+    scan_parser.add_argument("--mock", action="store_true",
+                             help="Use mock data for repeatable demos (no live API calls)")
 
     # Status command
     status_parser = subparsers.add_parser("status", help="Get scan status")
@@ -288,11 +330,17 @@ def main():
 
     if args.command == "scan":
         modules = args.modules.split(",") if args.modules else None
+        mock_mode = getattr(args, 'mock', False)
+
+        if mock_mode:
+            print(f"Mock mode enabled - using local threatintel-api for repeatable demos", file=sys.stderr)
+
         result = client.start_scan(
             target=args.target,
             scan_name=args.name,
             profile=args.profile,
-            modules=modules
+            modules=modules,
+            mock=mock_mode
         )
         print(json.dumps(result, indent=2))
 

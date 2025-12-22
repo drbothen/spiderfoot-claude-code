@@ -39,6 +39,7 @@ MARKER_START="# spiderfoot-lab-start"
 MARKER_END="# spiderfoot-lab-end"
 
 HOSTS_BLOCK="$MARKER_START
+# Target domains
 127.0.0.1 acme-corp.lab
 127.0.0.1 www.acme-corp.lab
 127.0.0.1 dev.acme-corp.lab
@@ -58,6 +59,13 @@ HOSTS_BLOCK="$MARKER_START
 127.0.0.1 jenkins.acme-corp.lab
 127.0.0.1 gitlab.acme-corp.lab
 127.0.0.1 grafana.acme-corp.lab
+# Lab services
+127.0.0.1 breach-api.lab.local
+127.0.0.1 threatintel-api.lab.local
+127.0.0.1 virustotal.lab.local
+127.0.0.1 greynoise.lab.local
+127.0.0.1 abuseipdb.lab.local
+127.0.0.1 shodan.lab.local
 $MARKER_END"
 
 hosts_enable() {
@@ -145,10 +153,24 @@ lab_urls() {
     echo ""
     echo -e "${GREEN}=== Lab Services ===${NC}"
     echo ""
-    echo "SpiderFoot UI:    http://localhost:5001"
-    echo "Web Target:       http://localhost:8080"
-    echo "OWASP Juice Shop: http://localhost:3000"
-    echo "DVWA:             http://localhost:8081"
+    echo "SpiderFoot UI:      http://localhost:5055"
+    echo "Threat Intel API:   http://localhost:5051"
+    echo "Breach API:         http://localhost:5052"
+    echo ""
+    echo -e "${GREEN}=== Target Websites ===${NC}"
+    echo ""
+    echo "Web Target (www):   http://localhost:8080"
+    echo "Dev Target:         http://localhost:8082"
+    echo "Staging Target:     http://localhost:8083"
+    echo "API Target:         http://localhost:8084"
+    echo "Old/Legacy Target:  http://localhost:8085"
+    echo "Files Target:       http://localhost:8086"
+    echo "VPN Target:         http://localhost:8087"
+    echo ""
+    echo -e "${GREEN}=== Vulnerable Apps ===${NC}"
+    echo ""
+    echo "OWASP Juice Shop:   http://localhost:3000"
+    echo "DVWA:               http://localhost:8081"
     echo ""
     echo -e "${YELLOW}Note: First DVWA access requires database setup.${NC}"
     echo -e "${YELLOW}      Click 'Create / Reset Database' on first visit.${NC}"
