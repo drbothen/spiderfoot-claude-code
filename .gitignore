@@ -19,6 +19,7 @@ uv.lock
 # Output files
 output/
 *.json
+!configs/alerts/*.json
 *.csv
 
 # OS files

@@ -1,0 +1,20 @@
+{
+  "alert_id": "SEC-2024-00148",
+  "timestamp": "2024-01-15T09:15:33Z",
+  "severity": "MEDIUM",
+  "source": "Email Gateway",
+  "rule": "Suspicious Link Clicked",
+  "description": "User clicked link to recently registered domain impersonating corporate branding",
+  "user": "jsmith",
+  "hostname": "WS-JSMITH-PC",
+  "department": "Finance",
+  "email_subject": "Important: Update Your Benefits Information",
+  "email_sender": "hr-updates@acme-corp-benefits.com",
+  "clicked_url": "https://acme-corp-benefits.com/login",
+  "referrer_domain": "mail.acme-corp.lab",
+  "browser": "Chrome 120.0.6099.129",
+  "action_taken": "Logged",
+  "enrichment_status": "pending",
+  "domain_age_days": 5,
+  "notes": "Domain registered 5 days ago. Visual similarity to legitimate acme-corp.lab detected."
+}

@@ -1,0 +1,22 @@
+{
+  "alert_id": "SEC-2024-00147",
+  "timestamp": "2024-01-15T14:32:18Z",
+  "severity": "HIGH",
+  "source": "Firewall",
+  "rule": "Outbound C2 Beaconing Detected",
+  "description": "Regular 60-second interval connections detected to external IP",
+  "src_ip": "10.1.50.23",
+  "dst_ip": "185.220.101.1",
+  "dst_port": 443,
+  "protocol": "TCP",
+  "bytes_out": 4096,
+  "bytes_in": 2048,
+  "interval_seconds": 60,
+  "connection_count": 47,
+  "user": "jsmith",
+  "hostname": "WS-JSMITH-PC",
+  "department": "Finance",
+  "action_taken": "Logged",
+  "enrichment_status": "pending",
+  "notes": "Beaconing pattern detected over 47 minute period. Consistent packet sizes suggest encrypted C2."
+}
