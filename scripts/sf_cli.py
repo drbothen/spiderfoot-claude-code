@@ -74,18 +74,18 @@ PROFILE_MODULES = {
 
 # Mock profile modules - use local threatintel-api service for repeatable demos
 MOCK_PROFILE_MODULES = {
-    # IR-mock profile: uses mock threat intel modules for demos
-    # Returns deterministic data without burning real API quotas
+    # IR-mock profile: ALL mock modules for fully repeatable demos
+    # No external network calls - everything is deterministic
     "ir": [
-        # Core network reconnaissance (real modules - no external API)
-        "sfp_dnsresolve", "sfp_whois", "sfp_sslcert",
+        # Core network reconnaissance (all mocked)
+        "sfp_dnsresolve_mock",   # Mock DNS (deterministic hostnames)
+        "sfp_whois_mock",        # Mock WHOIS (deterministic registry data)
+        "sfp_sslcert_mock",      # Mock SSL (deterministic cert data)
         # Mock threat intelligence feeds (query local threatintel-api)
         "sfp_virustotal_mock",   # Mock VirusTotal
         "sfp_shodan_mock",       # Mock Shodan
         "sfp_greynoise_mock",    # Mock GreyNoise
         "sfp_abuseipdb_mock",    # Mock AbuseIPDB
-        # Breach databases (lab's local breach-api)
-        "sfp_breach_api",
     ],
 }
 

@@ -34,6 +34,10 @@ services:
       - ./modules/sfp_greynoise_mock.py:/home/spiderfoot/modules/sfp_greynoise_mock.py:ro
       - ./modules/sfp_abuseipdb_mock.py:/home/spiderfoot/modules/sfp_abuseipdb_mock.py:ro
       - ./modules/sfp_shodan_mock.py:/home/spiderfoot/modules/sfp_shodan_mock.py:ro
+      # Mock network reconnaissance modules for fully offline demos
+      - ./modules/sfp_dnsresolve_mock.py:/home/spiderfoot/modules/sfp_dnsresolve_mock.py:ro
+      - ./modules/sfp_whois_mock.py:/home/spiderfoot/modules/sfp_whois_mock.py:ro
+      - ./modules/sfp_sslcert_mock.py:/home/spiderfoot/modules/sfp_sslcert_mock.py:ro
     entrypoint: ["/bin/sh", "/app/scripts/entrypoint.sh"]
     dns:
       - 172.28.0.2

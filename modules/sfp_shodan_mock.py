@@ -22,7 +22,7 @@ class sfp_shodan_mock(SpiderFootPlugin):
         'useCases': ["Investigate", "Passive", "Footprint"],
         'categories': ["Search Engines"],
         'dataSource': {
-            'website': "http://threatintel-api.lab.local:5000",
+            'website': "http://threatintel-api:5000",
             'model': "FREE_NOAUTH_UNLIMITED",
             'references': [],
             'description': "Mock Shodan API for OSINT lab IR demonstrations. Infrastructure fingerprinting."
@@ -30,7 +30,7 @@ class sfp_shodan_mock(SpiderFootPlugin):
     }
 
     opts = {
-        'api_url': 'http://threatintel-api.lab.local:5000'
+        'api_url': 'http://threatintel-api:5000'
     }
 
     optdescs = {

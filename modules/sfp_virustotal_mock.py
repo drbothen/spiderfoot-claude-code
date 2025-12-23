@@ -22,7 +22,7 @@ class sfp_virustotal_mock(SpiderFootPlugin):
         'useCases': ["Investigate", "Passive"],
         'categories': ["Reputation Systems"],
         'dataSource': {
-            'website': "http://threatintel-api.lab.local:5000",
+            'website': "http://threatintel-api:5000",
             'model': "FREE_NOAUTH_UNLIMITED",
             'references': [],
             'description': "Mock VirusTotal API for OSINT lab IR demonstrations."
@@ -30,7 +30,7 @@ class sfp_virustotal_mock(SpiderFootPlugin):
     }
 
     opts = {
-        'api_url': 'http://threatintel-api.lab.local:5000'
+        'api_url': 'http://threatintel-api:5000'
     }
 
     optdescs = {

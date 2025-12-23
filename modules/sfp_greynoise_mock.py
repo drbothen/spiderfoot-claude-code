@@ -22,7 +22,7 @@ class sfp_greynoise_mock(SpiderFootPlugin):
         'useCases': ["Investigate", "Passive"],
         'categories': ["Reputation Systems"],
         'dataSource': {
-            'website': "http://threatintel-api.lab.local:5000",
+            'website': "http://threatintel-api:5000",
             'model': "FREE_NOAUTH_UNLIMITED",
             'references': [],
             'description': "Mock GreyNoise API for OSINT lab IR demonstrations. Distinguishes internet background noise from targeted attacks."
@@ -30,7 +30,7 @@ class sfp_greynoise_mock(SpiderFootPlugin):
     }
 
     opts = {
-        'api_url': 'http://threatintel-api.lab.local:5000'
+        'api_url': 'http://threatintel-api:5000'
     }
 
     optdescs = {

@@ -11,6 +11,9 @@ Endpoints:
     GET /abuseipdb/ip/<ip>      - AbuseIPDB-style abuse reports
     GET /shodan/ip/<ip>         - Shodan-style service discovery
     GET /whois/domain/<domain>  - WHOIS-style domain info
+    GET /dns/reverse/<ip>       - Reverse DNS lookup
+    GET /whois/ip/<ip>          - WHOIS for IP addresses
+    GET /ssl/ip/<ip>            - SSL certificate info
 
 Demo Scenario:
     185.220.101.1 returns divergent intelligence:
@@ -36,6 +39,29 @@ app = Flask(__name__)
 IP_DATA = {
     # Tor exit node - sources disagree!
     "185.220.101.1": {
+        "dns": {
+            "reverse": "berlin01.tor-exit.artikel10.org",
+            "forward_match": False
+        },
+        "whois": {
+            "netname": "ARTIKEL10-TOR",
+            "descr": "Artikel 10 e.V. - Tor Exit Node",
+            "country": "DE",
+            "org": "Zwiebelfreunde e.V.",
+            "abuse_contact": "abuse@torproject.org",
+            "cidr": "185.220.101.0/24",
+            "asn": "AS205100",
+            "asn_name": "F3 Netze e.V."
+        },
+        "ssl": {
+            "port": 443,
+            "issuer": "CN=default",
+            "subject": "CN=default",
+            "serial": "14:09:b8:93:19:95:fc:fb:f4:78:26:59:59:01:af:bd:dd:3f:81:34",
+            "not_before": "Mar 28 16:51:41 2022 GMT",
+            "not_after": "Mar 25 16:51:41 2032 GMT",
+            "self_signed": True
+        },
         "virustotal": {
             "ip": "185.220.101.1",
             "malicious": 15,
@@ -409,6 +435,58 @@ def enrich_domain(domain):
         result["message"] = "No threat intelligence data available for this domain"
 
     return jsonify(result)
+
+
+@app.route('/dns/reverse/<ip>')
+def dns_reverse(ip):
+    """Reverse DNS lookup for IP address."""
+    if ip in IP_DATA and "dns" in IP_DATA[ip]:
+        return jsonify({
+            "data": IP_DATA[ip]["dns"],
+            "source": "mock-dns"
+        })
+    return jsonify({
+        "data": {
+            "ip": ip,
+            "reverse": None,
+            "message": "No reverse DNS record found"
+        },
+        "source": "mock-dns"
+    })
+
+
+@app.route('/whois/ip/<ip>')
+def whois_ip(ip):
+    """WHOIS lookup for IP address (network registration info)."""
+    if ip in IP_DATA and "whois" in IP_DATA[ip]:
+        return jsonify({
+            "data": IP_DATA[ip]["whois"],
+            "source": "mock-whois"
+        })
+    return jsonify({
+        "data": {
+            "ip": ip,
+            "message": "No WHOIS data available"
+        },
+        "source": "mock-whois"
+    })
+
+
+@app.route('/ssl/ip/<ip>')
+def ssl_ip(ip):
+    """SSL certificate info for IP address."""
+    if ip in IP_DATA and "ssl" in IP_DATA[ip]:
+        return jsonify({
+            "data": IP_DATA[ip]["ssl"],
+            "source": "mock-ssl"
+        })
+    return jsonify({
+        "data": {
+            "ip": ip,
+            "message": "No SSL certificate found"
+        },
+        "source": "mock-ssl"
+    })
 
 
 if __name__ == '__main__':
