@@ -66,6 +66,8 @@ HOSTS_BLOCK="$MARKER_START
 127.0.0.1 greynoise.lab.local
 127.0.0.1 abuseipdb.lab.local
 127.0.0.1 shodan.lab.local
+127.0.0.1 siem-api.lab.local
+127.0.0.1 siem.lab.local
 $MARKER_END"
 
 hosts_enable() {
@@ -155,6 +157,7 @@ lab_urls() {
     echo ""
     echo "SpiderFoot UI:      http://localhost:5055"
     echo "Threat Intel API:   http://localhost:5051"
+    echo "SIEM API:           http://localhost:5053"
     echo "Breach API:         http://localhost:5052"
     echo ""
     echo -e "${GREEN}=== Target Websites ===${NC}"

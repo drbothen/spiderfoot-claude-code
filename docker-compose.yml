@@ -243,6 +243,31 @@ services:
       retries: 3
 
   # =============================================================================
+  # SIEM API - Mock SIEM alert feed
+  # =============================================================================
+
+  siem-api:
+    build:
+      context: ./configs/siem-api
+      dockerfile: Dockerfile
+    image: siem-api:local
+    container_name: siem-api
+    ports:
+      - "5053:5000"
+    networks:
+      osint-lab:
+        ipv4_address: 172.28.0.22
+        aliases:
+          - siem-api.lab.local
+          - siem.lab.local
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # =============================================================================
   # VULNERABLE WEB APPS (for realistic scanning targets)
   # =============================================================================
 
