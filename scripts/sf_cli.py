@@ -300,7 +300,9 @@ def main():
     summary_parser.add_argument("--scan-id", "-i", required=True, help="Scan ID")
 
     # List command
-    subparsers.add_parser("list", help="List all scans")
+    list_parser = subparsers.add_parser("list", help="List all scans")
+    list_parser.add_argument("--format", "-f", choices=["text", "json"], default="text",
+                            help="Output format (default: text)")
 
     # Modules command
     subparsers.add_parser("modules", help="List available modules")
@@ -387,10 +389,25 @@ def main():
 
     elif args.command == "list":
         result = client.list_scans()
-        for scan in result:
-            # scan format: [id, name, target, started, ended, last_updated, status, elements, risk]
-            status = scan[6] if len(scan) > 6 else "UNKNOWN"
-            print(f"ID: {scan[0]}, Name: {scan[1]}, Target: {scan[2]}, Status: {status}")
+        if args.format == "json":
+            # Convert to structured JSON
+            scans = []
+            for scan in result:
+                # scan format: [id, name, target, started, ended, last_updated, status, elements, risk]
+                scans.append({
+                    "id": scan[0] if len(scan) > 0 else None,
+                    "name": scan[1] if len(scan) > 1 else None,
+                    "target": scan[2] if len(scan) > 2 else None,
+                    "started": scan[3] if len(scan) > 3 else None,
+                    "ended": scan[4] if len(scan) > 4 else None,
+                    "status": scan[6] if len(scan) > 6 else "UNKNOWN",
+                    "elements": scan[7] if len(scan) > 7 else 0,
+                })
+            print(json.dumps(scans, indent=2))
+        else:
+            for scan in result:
+                status = scan[6] if len(scan) > 6 else "UNKNOWN"
+                print(f"ID: {scan[0]}, Name: {scan[1]}, Target: {scan[2]}, Status: {status}")
 
     elif args.command == "modules":
         result = client.get_modules()
